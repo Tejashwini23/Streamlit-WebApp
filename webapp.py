@@ -1,37 +1,44 @@
 import streamlit as st
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
+import tflite_runtime.interpreter as tflite  # Light and compatible
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="Digit Generator", layout="wide")
+# Set page config
+st.set_page_config(page_title="🧠 Digit Generator", layout="wide")
 
-# Load the trained decoder model
+st.title("🧠 Handwritten Digit Generator")
+st.markdown("This app uses a TFLite model to generate handwritten digits using a Variational Autoencoder.")
+
+# Load the TFLite model
 @st.cache_resource
-def load_decoder():
-    return tf.keras.models.load_model("vae_decoder.h5")
+def load_model():
+    interpreter = tflite.Interpreter(model_path="vae_decoder.tflite")
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    return interpreter, input_details, output_details
 
-decoder = load_decoder()
+interpreter, input_details, output_details = load_model()
 
-st.title("🧠 Handwritten Digit Image Generator (VAE from Scratch)")
-
-st.markdown("""
-This app generates different **handwritten digit variants (0–9)** using a Variational Autoencoder (VAE) 
-trained from scratch on the `digits` dataset.
-
-🔢 Select a digit and view 5 variations!
-""")
-
-# Input digit (optional for display – real generation is label-free)
-digit = st.number_input("Choose a digit (0–9) just for labeling", min_value=0, max_value=9, step=1)
-
-st.subheader(f"🖼️ Variants of Digit {digit} (Generated)")
+# Create layout
+st.subheader("🖼️ Generated Digit Variations")
 
 cols = st.columns(5)
+
 for i in range(5):
     with cols[i]:
-        latent_vector = np.random.normal(size=(1, 2))  # Latent space is 2D
-        generated = decoder.predict(latent_vector, verbose=0)[0].reshape(8, 8)
-        plt.imshow(generated, cmap='gray')
-        plt.axis('off')
+        # Sample random latent vector
+        z = np.random.normal(size=(1, 2)).astype(np.float32)
+
+        # Set input tensor
+        interpreter.set_tensor(input_details[0]['index'], z)
+        interpreter.invoke()
+
+        # Get output
+        output = interpreter.get_tensor(output_details[0]['index'])
+        image = output[0].reshape(8, 8)
+
+        # Show image
+        plt.imshow(image, cmap="gray")
+        plt.axis("off")
         st.pyplot(plt)
