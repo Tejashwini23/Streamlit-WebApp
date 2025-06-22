@@ -9,7 +9,7 @@ st.set_page_config(page_title="Digit Generator", layout="wide")
 # Load the trained decoder model
 @st.cache_resource
 def load_decoder():
-    return tf.keras.models.load_model("/content/vae_decoder.h5")
+    return tf.keras.models.load_model("vae_decoder.h5")
 
 decoder = load_decoder()
 
