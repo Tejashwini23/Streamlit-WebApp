@@ -1,42 +1,52 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf  # Use full TensorFlow instead of tflite_runtime
+import torch
+import torch.nn as nn
 
 # Streamlit config
-st.set_page_config(page_title="🧠 Digit Generator", layout="wide")
+st.set_page_config(page_title="🧠 Digit Generator (PyTorch)", layout="wide")
 st.title("🧠 Handwritten Digit Generator")
-st.markdown("This app uses a TFLite model to generate handwritten digits using a Variational Autoencoder (VAE).")
+st.markdown("This app uses a PyTorch-based VAE decoder to generate handwritten digits.")
 
-# Load the TFLite model (cached to avoid reloading)
+# Define the decoder architecture (example architecture)
+class Decoder(nn.Module):
+    def __init__(self, latent_dim=2):
+        super(Decoder, self).__init__()
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),  # Output shape (8x8 = 64)
+            nn.Sigmoid()  # To map pixel values between 0 and 1
+        )
+
+    def forward(self, z):
+        return self.decoder(z)
+
+# Load the model (cached)
 @st.cache_resource
 def load_model():
-    interpreter = tf.lite.Interpreter(model_path="vae_decoder.tflite")
-    interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    return interpreter, input_details, output_details
+    model = Decoder()
+    model.load_state_dict(torch.load("vae_decoder.pth", map_location=torch.device("cpu")))
+    model.eval()
+    return model
 
-interpreter, input_details, output_details = load_model()
+decoder = load_model()
 
-# UI section
+# UI
 st.subheader("🖼️ Generated Digit Variations")
-
-# Display 5 generated digits side by side
 cols = st.columns(5)
 
 for i in range(5):
     with cols[i]:
-        # Generate a random 2D latent vector
-        z = np.random.normal(size=(1, 2)).astype(np.float32)
+        # Sample random latent vector
+        z = torch.randn(1, 2)  # 2D latent space
 
-        # Run inference
-        interpreter.set_tensor(input_details[0]['index'], z)
-        interpreter.invoke()
-        output = interpreter.get_tensor(output_details[0]['index'])
+        # Generate image
+        output = decoder(z).detach().numpy()
+        image = output.reshape(8, 8)
 
-        # Reshape and plot the image
-        image = output[0].reshape(8, 8)
+        # Plot image
         fig, ax = plt.subplots()
         ax.imshow(image, cmap="gray")
         ax.axis("off")
