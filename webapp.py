@@ -13,7 +13,7 @@ st.markdown("This app uses a pre-trained **GAN (Generative Adversarial Network)*
 def load_model():
     """Loads the pre-trained Keras GAN Generator model."""
     try:
-        model = tf.keras.models.load_model("vae_devoder.h5", compile=False) # Added compile=False for robustness
+        model = tf.keras.models.load_model("vae_decoder.h5", compile=False) # Added compile=False for robustness
         return model
     except FileNotFoundError:
         st.error("Model file 'gan_generator.h5' not found. Please download it and place it in the same directory.")
