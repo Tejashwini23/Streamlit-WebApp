@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import tflite_runtime.interpreter as tflite  # Lightweight TFLite runtime
+import tensorflow as tf  # Use full TensorFlow instead of tflite_runtime
 
 # Streamlit config
 st.set_page_config(page_title="🧠 Digit Generator", layout="wide")
@@ -11,7 +11,7 @@ st.markdown("This app uses a TFLite model to generate handwritten digits using a
 # Load the TFLite model (cached to avoid reloading)
 @st.cache_resource
 def load_model():
-    interpreter = tflite.Interpreter(model_path="vae_decoder.tflite")
+    interpreter = tf.lite.Interpreter(model_path="vae_decoder.tflite")
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
