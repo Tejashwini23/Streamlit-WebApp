@@ -14,7 +14,7 @@ def load_model():
     """Loads the pre-trained Keras GAN Generator model."""
     try:
         # Use the new GAN generator model file
-        model = tf.keras.models.load_model("gan_generator.h5")
+        model = tf.keras.models.load_model("vae_decoder.h5")
         return model
     except FileNotFoundError:
         st.error("Model file 'gan_generator.h5' not found. Please download it and place it in the same directory.")
